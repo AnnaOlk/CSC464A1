@@ -1,0 +1,80 @@
+import java.util.concurrent.Semaphore;
+
+class Queue {
+	  int value;
+
+	  static Semaphore sProducer = new Semaphore(1);
+	  static Semaphore sConsumer = new Semaphore(0);
+	  
+	  void get() {
+	    try {
+	      sConsumer.acquire();
+	    } catch (InterruptedException e) {
+	    	System.out.println(e.getMessage());
+	    }
+	    System.out.println("Got: " + value);
+	    sProducer.release();
+	  }
+
+	  void put(int n) {
+	    try {
+	      sProducer.acquire();
+	    } catch (InterruptedException e) {
+	    	System.out.println(e.getMessage());	      
+	    }
+
+	    this.value = n;
+	    System.out.println("Put: " + n);
+	    sConsumer.release();
+	  }
+}
+
+
+	class Producer implements Runnable {
+		  Queue q;
+		
+		  Producer(Queue q) {
+		    this.q = q;
+		    new Thread(this).start();
+		  }
+		
+		  public void run() {
+			  try {
+				  for (int i = 0; i < 10; i++) {
+					  Thread.sleep(1000);
+				      q.put(i);
+				  }
+			  } catch (InterruptedException e) {
+	                System.out.println(e.getMessage());
+	          }
+		  }
+	}
+
+	class Consumer implements Runnable {
+		  Queue q;
+
+		  Consumer(Queue q) {
+		    this.q = q;
+		    new Thread(this).start();
+		  }
+
+		  public void run() {
+			  try {
+				  for (int i = 0; i < 10; i++) {
+					  Thread.sleep(1000);
+				      q.get();
+				  }
+			  } catch (InterruptedException e) {
+	                System.out.println(e.getMessage());
+	          }
+		  }
+	}
+	
+	public class ProducerConsumerSemaphores {
+		  public static void main(String args[]) {
+		    Queue q = new Queue();
+		    new Consumer(q);
+		    new Producer(q);
+		  }
+    }
+	
