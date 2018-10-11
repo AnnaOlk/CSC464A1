@@ -1,0 +1,88 @@
+import java.util.LinkedList; 
+  
+public class ProducerConsumerThreads { 
+ 
+    public static class PC {
+    	
+        //List shared by producer and consumer 
+        //Size of linked list is 3 
+    	
+        LinkedList<Integer> list = new LinkedList<>(); 
+        int listSize = 3; 
+  
+        // Function called by consumer thread 
+        public void consume() throws InterruptedException { 
+        	for(int i = 0; i < 10; i++) { 
+                synchronized (this) { 
+                    // consumer thread waits while list empty
+                    while (list.size()==0) {
+                        wait(); 
+                    }
+   
+                    int value = list.removeFirst(); // consumes first job
+  
+                    System.out.println("Got: " + value); 
+   
+                    notify(); // Notifies producer
+                    Thread.sleep(1000); 
+                } 
+            } 
+        } 
+        
+     // Function called by producer thread 
+        public void produce() throws InterruptedException { 
+            int value = 0; 
+            
+            for(int i = 0; i < 10; i++) { 
+                synchronized (this) { 
+                    // producer thread waits while list full 
+                    while (list.size()==listSize) {
+                        wait(); 
+                    }
+  
+                    System.out.println("Put: " +value); 
+  
+                    list.add(value++); // to insert the jobs in the list 
+  
+                    notify();  //notifies the consumer thread that it can consume
+                    Thread.sleep(1000);  // consumes
+                } 
+            } 
+        } 
+    } 
+    
+    public static void main(String[] args) throws InterruptedException { 
+
+        final PC pc = new PC(); 
+  
+        // Create producer thread 
+        Thread t1 = new Thread(new Runnable() { 
+            public void run() { 
+                try { 
+                    pc.produce(); 
+                } 
+                catch(InterruptedException e) { 
+                    e.printStackTrace(); 
+                } 
+            } 
+        }); 
+  
+        // Create consumer thread 
+        Thread t2 = new Thread(new Runnable() { 
+            public void run() { 
+                try { 
+                    pc.consume(); 
+                } 
+                catch(InterruptedException e) { 
+                    e.printStackTrace(); 
+                } 
+            } 
+        }); 
+ 
+        t1.start(); 
+        t2.start(); 
+        t1.join(); 
+        t2.join(); 
+    } 
+  
+} 
